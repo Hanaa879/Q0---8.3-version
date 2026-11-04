@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q0 - Smart Campus Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --accent: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-body); color: var(--text-main); padding-bottom: 80px; }
+
+        .app-header {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 100;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .brand { font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .brand span { background: var(--accent); color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+
+        .role-selector {
+            background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main);
+            padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; outline: none;
+        }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; text-align: center; }
+        .stat-val { font-size: 1.3rem; font-weight: 700; color: var(--text-main); }
+        .stat-lbl { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+
+        .tab-group { display: flex; background: var(--bg-card); border-radius: 10px; padding: 4px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: var(--accent); color: white; }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+        .card-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+
+        .form-group { margin-bottom: 14px; }
+        .form-row { display: flex; gap: 10px; }
+        label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
+        input, select, textarea {
+            width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+            color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 0.9rem; outline: none;
+        }
+
+        .checkbox-group {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text-main); }
+        .checkbox-item input { width: auto; cursor: pointer; }
+
+        .btn {
+            width: 100%; background: var(--accent); color: white; border: none;
+            padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer;
+        }
+        .btn-sm { width: auto; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        .feed-item {
+            background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px; margin-bottom: 12px;
+        }
+        .feed-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .feed-title { font-weight: 600; font-size: 0.95rem; }
+        .feed-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; }
+
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .badge.PENDING, .badge.OPEN { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); }
+        .badge.APPROVED, .badge.RESOLVED { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); }
+        .badge.REJECTED { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+        
+        .urgency-badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 700; }
+        .urgency-HIGH { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .urgency-MEDIUM { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+        .urgency-LOW { background: rgba(59, 130, 246, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+
+        .progress-container { margin: 10px 0; }
+        .progress-lbl { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+        .progress-track { background: var(--bg-input); height: 8px; border-radius: 4px; overflow: hidden; }
+        .progress-fill { background: var(--success); height: 100%; transition: width 0.3s ease; }
+
+        .teacher-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+        .teacher-pill { font-size: 0.72rem; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); }
+        .teacher-pill.APPROVED { background: rgba(16, 185, 129, 0.2); color: var(--success); border-color: var(--success); }
+        .teacher-pill.PENDING { background: rgba(245, 158, 11, 0.2); color: var(--warning); border-color: var(--warning); }
+        .teacher-pill.REJECTED { background: rgba(239, 68, 68, 0.2); color: var(--danger); border-color: var(--danger); }
+
+        .img-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin: 10px 0; border: 1px solid var(--border); }
+        .action-btns { display: flex; gap: 8px; margin-top: 10px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="brand">Q0 <span>Smart Campus</span></div>
+        <div>
+            <select id="roleSelector" class="role-selector" onchange="changeRole()">
+                <option value="student">🎓 Student View</option>
+                <option value="faculty">👨‍🏫 Faculty View</option>
+                <option value="maintenance">🛠️ Maintenance View</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Stats Bar -->
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-val" id="statPending">0</div><div class="stat-lbl">Pending Docs</div></div>
+            <div class="stat-card"><div class="stat-val" id="statApproved">0</div><div class="stat-lbl">Approved</div></div>
+            <div class="stat-card"><div class="stat-val" id="statIncidents">0</div><div class="stat-lbl">Open Issues</div></div>
+        </div>
+
+        <!-- ==================== 1. STUDENT VIEW ==================== -->
+        <div id="studentPortal">
+            <div class="tab-group">
+                <button class="tab-btn active" onclick="switchStudentTab('subTab', this)">Submit Request</button>
+                <button class="tab-btn" onclick="switchStudentTab('myDocsTab', this)">My Submissions</button>
+            </div>
+
+            <!-- Submit Forms -->
+            <div id="subTab">
+                <div class="card">
+                    <div class="card-title">Document Approval Request</div>
+                    <form id="docForm" onsubmit="event.preventDefault(); submitDocRequest();">
+                        <div class="form-group">
+                            <label>Your Email</label>
+                            <input type="email" id="studentEmail" placeholder="student@campus.edu" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1;">
+                                <label>Approval Type</label>
+                                <select id="docType">
+                                    <option value="On-Duty (OD)">On-Duty (OD) Letter</option>
+                                    <option value="Leave Request">Leave Request</option>
+                                    <option value="Lab Access">Special Lab Access</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label>Urgency Level</label>
+                                <select id="docUrgency">
+                                    <option value="LOW">🔵 Low</option>
+                                    <option value="MEDIUM" selected>🟡 Medium</option>
+                                    <option value="HIGH">🔴 High (Urgent)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- MULTI-STAFF SELECTION -->
+                        <div class="form-group">
+                            <label>Select Staff Approvers</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="staff-checkbox" value="Dr. Smith (HOD)" checked>
+                                    Dr. Smith (HOD)
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="staff-checkbox" value="Prof. Davis (Advisor)">
+                                    Prof. Davis (Advisor)
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" class="staff-checkbox" value="Dr. Wilson (Lab Incharge)">
+                                    Dr. Wilson (Lab Incharge)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Reason / Purpose</label>
+                            <textarea id="docReason" rows="2" placeholder="Briefly state the reason..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn">Submit Request</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Report Infrastructure Incident</div>
+                    <form id="incidentForm" onsubmit="event.preventDefault(); submitIncidentReport();">
+                        <div class="form-group">
+                            <label>Campus Location</label>
+                            <input type="text" id="incLocation" placeholder="e.g. Block C - Lab 3" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Issue Description</label>
+                            <input type="text" id="incDesc" placeholder="e.g. Broken Fan / Light issue" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Attach Photo</label>
+                            <input type="file" id="incPhoto" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn">Report Incident</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Student Tracked Submissions -->
+            <div id="myDocsTab" class="hidden">
+                <div class="card">
+                    <div class="card-title">My Document Statuses</div>
+                    <div id="studentDocsFeed"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">My Reported Incidents</div>
+                    <div id="studentIncidentsFeed"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 2. FACULTY VIEW ==================== -->
+        <div id="facultyPortal" class="hidden">
+            <div class="card">
+                <div class="card-title">
+                    Faculty Review Queue
+                    <select id="activeTeacherSelect" style="width:auto; padding:4px 8px; font-size:0.75rem;" onchange="renderAll()">
+                        <option value="Dr. Smith (HOD)">Logging in as: Dr. Smith (HOD)</option>
+                        <option value="Prof. Davis (Advisor)">Logging in as: Prof. Davis (Advisor)</option>
+                        <option value="Dr. Wilson (Lab Incharge)">Logging in as: Dr. Wilson (Lab Incharge)</option>
+                    </select>
+                </div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Review OD/Leave requests assigned to you. High priority items appear first.</p>
+                <div id="facultyApprovalsFeed"></div>
+            </div>
+        </div>
+
+        <!-- ==================== 3. MAINTENANCE VIEW ==================== -->
+        <div id="maintenancePortal" class="hidden">
+            <div class="card">
+                <div class="card-title">Helpdesk Maintenance Feed</div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Reported campus issues requiring repair.</p>
+                <div id="maintenanceFeed"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Embedded JavaScript logic -->
+    <script>
+        let documents = [];
+        let incidents = [];
+
+        function loadData() {
+            try {
+                const rawDocs = localStorage.getItem('q0_docs');
+                if (rawDocs) {
+                    const parsed = JSON.parse(rawDocs);
+                    if (Array.isArray(parsed)) {
+                        documents = parsed.filter(d => d && Array.isArray(d.approvals));
+                    }
+                }
+            } catch(e) { documents = []; }
+
+            try {
+                const rawInc = localStorage.getItem('q0_incidents');
+                if (rawInc) {
+                    const parsed = JSON.parse(rawInc);
+                    if (Array.isArray(parsed)) incidents = parsed;
+                }
+            } catch(e) { incidents = []; }
+        }
+
+        function switchStudentTab(tabId, btn) {
+            document.getElementById('subTab').classList.add('hidden');
+            document.getElementById('myDocsTab').classList.add('hidden');
+            document.querySelectorAll('#studentPortal .tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.remove('hidden');
+            btn.classList.add('active');
+        }
+
+        function changeRole() {
+            const role = document.getElementById('roleSelector').value;
+            document.getElementById('studentPortal').classList.add('hidden');
+            document.getElementById('facultyPortal').classList.add('hidden');
+            document.getElementById('maintenancePortal').classList.add('hidden');
+
+            if (role === 'student') {
+                document.getElementById('studentPortal').classList.remove('hidden');
+            } else if (role === 'faculty') {
+                document.getElementById('facultyPortal').classList.remove('hidden');
+            } else if (role === 'maintenance') {
+                document.getElementById('maintenancePortal').classList.remove('hidden');
+            }
+        }
+
+        function submitDocRequest() {
+            const email = document.getElementById('studentEmail').value.trim();
+            const type = document.getElementById('docType').value;
+            const urgency = document.getElementById('docUrgency').value;
+            const reason = document.getElementById('docReason').value.trim();
+
+            if (!email || !reason) {
+                alert('Please complete all required fields.');
+                return;
+            }
+
+            const checkedBoxes = document.querySelectorAll('.staff-checkbox:checked');
+            const selectedStaff = Array.from(checkedBoxes).map(cb => cb.value);
+
+            if (selectedStaff.length === 0) {
+                alert('Please select at least one staff approver!');
+                return;
+            }
+
+            const teacherApprovals = selectedStaff.map(staffName => ({
+                staff: staffName,
+                status: 'PENDING'
+            }));
+
+            const newDoc = {
+                id: 'REQ-' + Math.floor(1000 + Math.random() * 9000),
+                email: email,
+                type: type,
+                urgency: urgency,
+                approvals: teacherApprovals,
+                reason: reason,
+                status: 'PENDING',
+                date: new Date().toLocaleDateString()
+            };
+
+            documents.unshift(newDoc);
+            saveAndRender();
+            
+            document.getElementById('docReason').value = '';
+            alert('Request submitted! Requires sign-off from ' + selectedStaff.length + ' teacher(s).');
+        }
+
+        function submitIncidentReport() {
+            const location = document.getElementById('incLocation').value.trim();
+            const desc = document.getElementById('incDesc').value.trim();
+            const fileInput = document.getElementById('incPhoto');
+
+            if (!location || !desc) {
+                alert('Please fill in location and description.');
+                return;
+            }
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please select an issue photo!');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(evt) {
+                const img = new Image();
+                img.src = evt.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 500;
+                    canvas.height = img.height * (500 / img.width);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+
+                    const newIncident = {
+                        id: 'INC-' + Math.floor(1000 + Math.random() * 9000),
+                        location: location,
+                        desc: desc,
+                        photo: compressedBase64,
+                        status: 'OPEN',
+                        date: new Date().toLocaleDateString()
+                    };
+                    incidents.unshift(newIncident);
+                    saveAndRender();
+                    
+                    document.getElementById('incLocation').value = '';
+                    document.getElementById('incDesc').value = '';
+                    document.getElementById('incPhoto').value = '';
+                    alert('Incident reported successfully!');
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function approveAsTeacher(docId, teacherName, action) {
+            const item = documents.find(d => d.id === docId);
+            if (!item || !item.approvals) return;
+
+            const teacherObj = item.approvals.find(a => a.staff === teacherName);
+            if (teacherObj) {
+                teacherObj.status = action;
+            }
+
+            if (item.approvals.some(a => a.status === 'REJECTED')) {
+                item.status = 'REJECTED';
+            } else if (item.approvals.every(a => a.status === 'APPROVED')) {
+                item.status = 'APPROVED';
+            } else {
+                item.status = 'PENDING';
+            }
+
+            saveAndRender();
+        }
+
+        function resolveIncident(id) {
+            const item = incidents.find(i => i.id === id);
+            if (item) item.status = 'RESOLVED';
+            saveAndRender();
+        }
+
+        function saveAndRender() {
+            try {
+                localStorage.setItem('q0_docs', JSON.stringify(documents));
+                localStorage.setItem('q0_incidents', JSON.stringify(incidents));
+            } catch(e) {}
+            renderAll();
+        }
+
+        function renderAll() {
+            const pElem = document.getElementById('statPending');
+            const aElem = document.getElementById('statApproved');
+            const iElem = document.getElementById('statIncidents');
+
+            if (pElem) pElem.innerText = documents.filter(d => d.status === 'PENDING').length;
+            if (aElem) aElem.innerText = documents.filter(d => d.status === 'APPROVED').length;
+            if (iElem) iElem.innerText = incidents.filter(i => i.status === 'OPEN').length;
+
+            const urgencyWeight = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+            const sortedDocs = [...documents].sort((a, b) => (urgencyWeight[b.urgency] || 0) - (urgencyWeight[a.urgency] || 0));
+
+            const renderApprovalStatus = function(d) {
+                if (!d.approvals || !Array.isArray(d.approvals)) return '';
+
+                const approvedCount = d.approvals.filter(a => a.status === 'APPROVED').length;
+                const totalCount = d.approvals.length;
+                const pct = Math.round((approvedCount / totalCount) * 100);
+
+                const pillsHtml = d.approvals.map(a => {
+                    let symbol = '⏳';
+                    if (a.status === 'APPROVED') symbol = '✓';
+                    if (a.status === 'REJECTED') symbol = '✕';
+                    return '<span class="teacher-pill ' + a.status + '">' + symbol + ' ' + a.staff + '</span>';
+                }).join('');
+
+                return '<div class="progress-container">' +
+                    '<div class="progress-lbl">' +
+                        '<span>Approval Progress: <b>' + approvedCount + '/' + totalCount + ' Teachers Approved</b></span>' +
+                        '<span>' + pct + '%</span>' +
+                    '</div>' +
+                    '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+                    '<div class="teacher-pills">' + pillsHtml + '</div>' +
+                '</div>';
+            };
+
+            // Student Docs Feed
+            const sDocs = document.getElementById('studentDocsFeed');
+            if (sDocs) {
+                sDocs.innerHTML = sortedDocs.length === 0 ? '<p style="color:var(--text-muted); font-size:0.85rem;">No requests submitted yet.</p>' :
+                    sortedDocs.map(d => 
+                        '<div class="feed-item">' +
+                            '<div class="feed-header">' +
+                                '<div class="feed-title">' + d.type + ' (' + d.id + ')</div>' +
+                                '<div><span class="urgency-badge urgency-' + d.urgency + '">' + d.urgency + '</span> <span class="badge ' + d.status + '">' + d.status + '</span></div>' +
+                            '</div>' +
+                            '<div class="feed-sub">Reason: ' + d.reason + ' • ' + d.date + '</div>' +
+                            renderApprovalStatus(d) +
+                        '</div>'
+                    ).join('');
+            }
+
+            // Student Incidents Feed
+            const sInc = document.getElementById('studentIncidentsFeed');
+            if (sInc) {
+                sInc.innerHTML = incidents.length === 0 ? '<p style="color:var(--text-muted); font-size:0.85rem;">No incidents reported yet.</p>' :
+                    incidents.map(i => 
+                        '<div class="feed-item">' +
+                            '<div class="feed-header">' +
+                                '<div class="feed-title">' + i.location + ' (' + i.id + ')</div>' +
+                                '<span class="badge ' + i.status + '">' + i.status + '</span>' +
+                            '</div>' +
+                            '<div class="feed-sub">' + i.desc + ' • ' + i.date + '</div>' +
+                        '</div>'
+                    ).join('');
+            }
+
+            // Faculty Feed
+            const fFeed = document.getElementById('facultyApprovalsFeed');
+            const activeTeacherSelect = document.getElementById('activeTeacherSelect');
+            const activeTeacher = activeTeacherSelect ? activeTeacherSelect.value : 'Dr. Smith (HOD)';
+
+            if (fFeed) {
+                const assignedDocs = sortedDocs.filter(d => d.approvals && d.approvals.some(a => a.staff === activeTeacher));
+
+                if (assignedDocs.length === 0) {
+                    fFeed.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No active requests assigned to <b>' + activeTeacher + '</b>.</p>';
+                } else {
+                    fFeed.innerHTML = assignedDocs.map(d => {
+                        const myApproval = d.approvals.find(a => a.staff === activeTeacher);
+                        const myStatus = myApproval ? myApproval.status : 'PENDING';
+                        const teacherShortName = activeTeacher.split(' ')[1] || activeTeacher;
+
+                        let actionButtons = '';
+                        if (d.status !== 'REJECTED') {
+                            if (myStatus === 'PENDING') {
+                                actionButtons = '<div class="action-btns">' +
+                                    '<button onclick="approveAsTeacher(\'' + d.id + '\', \'' + activeTeacher + '\', \'APPROVED\')" class="btn btn-sm btn-success">Approve as ' + teacherShortName + '</button>' +
+                                    '<button onclick="approveAsTeacher(\'' + d.id + '\', \'' + activeTeacher + '\', \'REJECTED\')" class="btn btn-sm btn-danger">Reject</button>' +
+                                '</div>';
+                            } else {
+                                actionButtons = '<div style="margin-top:8px; font-size:0.8rem; color:var(--text-muted);">You marked this request as: <b>' + myStatus + '</b></div>';
+                            }
+                        }
+
+                        return '<div class="feed-item">' +
+                            '<div class="feed-header">' +
+                                '<div class="feed-title">' + d.type + ' <span style="font-weight:normal; color:var(--text-muted);">(' + d.id + ')</span></div>' +
+                                '<div><span class="urgency-badge urgency-' + d.urgency + '">' + d.urgency + '</span> <span class="badge ' + d.status + '">' + d.status + '</span></div>' +
+                            '</div>' +
+                            '<div class="feed-sub">Student: ' + d.email + ' • ' + d.date + '</div>' +
+                            '<div style="font-size:0.85rem; color:#cbd5e1; margin-bottom:8px;">Reason: ' + d.reason + '</div>' +
+                            renderApprovalStatus(d) +
+                            actionButtons +
+                        '</div>';
+                    }).join('');
+                }
+            }
+
+            // Maintenance Feed
+            const mFeed = document.getElementById('maintenanceFeed');
+            if (mFeed) {
+                mFeed.innerHTML = incidents.length === 0 ? '<p style="color:var(--text-muted); font-size:0.85rem;">No issues reported.</p>' :
+                    incidents.map(i => 
+                        '<div class="feed-item">' +
+                            '<div class="feed-header">' +
+                                '<div class="feed-title">' + i.location + ' <span style="font-weight:normal; color:var(--text-muted);">(' + i.id + ')</span></div>' +
+                                '<span class="badge ' + i.status + '">' + i.status + '</span>' +
+                            '</div>' +
+                            '<div class="feed-sub">Details: ' + i.desc + ' • ' + i.date + '</div>' +
+                            '<img src="' + i.photo + '" class="img-preview">' +
+                            (i.status === 'OPEN' ? '<button onclick="resolveIncident(\'' + i.id + '\')" class="btn btn-sm btn-success" style="margin-top:6px;">Mark Issue as Resolved</button>' : '') +
+                        '</div>'
+                    ).join('');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            renderAll();
+        });
+
+        loadData();
+        renderAll();
+    </script>
+</body>
+</html>
